@@ -9,23 +9,14 @@ import dropbox
 TOKEN = ''
 
 parser = argparse.ArgumentParser(description='View Dropbox')
-parser.add_argument('folder', nargs='?', default='download',
+parser.add_argument('folder', type=str, nargs='?', default='download',
                     help='Folder name in your Dropbox')
-parser.add_argument('--token', default=TOKEN,
+parser.add_argument('--token', type=str, default=TOKEN,
                     help='Access token '
                     '(see https://www.dropbox.com/developers/apps)')
-parser.add_argument('--yes', '-y', action='store_true',
-                    help='Answer yes to all questions')
-parser.add_argument('--no', '-n', action='store_true',
-                    help='Answer no to all questions')
-parser.add_argument('--default', '-d', action='store_true',
-                    help='Take default answer on all questions')
 
 def main():
     args = parser.parse_args()
-    if sum([bool(b) for b in (args.yes, args.no, args.default)]) > 1:
-        print('At most one of --yes, --no, --default is allowed')
-        sys.exit(2)
     if not args.token:
         print('--token is mandatory')
         sys.exit(2)
