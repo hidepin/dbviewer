@@ -29,12 +29,12 @@ def main():
     dbx = dropbox.Dropbox(args.token)
 
     if args.size:
-        disk_usage(dbx, folder, '');
+        disk_usage(dbx, folder);
     else:
         list_folder(dbx, folder, '')
 
-def disk_usage(dbx, folder, subfolder):
-    path = '/%s/%s' % (folder, subfolder.replace(os.path.sep, '/'))
+def disk_usage(dbx, folder):
+    path = '/%s' % (folder)
     while '//' in path:
         path = path.replace('//', '/')
     path = path.rstrip('/')
@@ -45,8 +45,8 @@ def disk_usage(dbx, folder, subfolder):
         print('Folder listing failed for', path, '-- assumed empty:', err)
         return {}
     else:
-        size = 0
-        _disk_usage_recursive(dbx, res)
+        size = _disk_usage_recursive(dbx, res)
+        print(folder, 'size = ', size)
 
 def list_folder(dbx, folder, subfolder):
     path = '/%s/%s' % (folder, subfolder.replace(os.path.sep, '/'))
@@ -72,12 +72,16 @@ def stopwatch(message):
         print('Total elapsed time for %s: %.3f' % (message, t1 - t0))
 
 def _disk_usage_recursive(dbx, res):
+    size = 0
     for entry in res.entries:
-        print(entry.name)
+        if type(entry) is dropbox.files.FileMetadata:
+            size += entry.size
 
     if (res.has_more):
         res_continue = dbx.files_list_folder_continue(res.cursor)
-        _disk_usage_recursive(dbx, res_continue)
+        size += _disk_usage_recursive(dbx, res_continue)
+
+    return size
 
 if __name__ == '__main__':
     main()
