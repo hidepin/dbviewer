@@ -16,6 +16,8 @@ parser.add_argument('--token', type=str, default=TOKEN,
                     '(see https://www.dropbox.com/developers/apps)')
 parser.add_argument('--size', '-s', action='store_true',
                     help='Display sum of file size.')
+parser.add_argument('--quiet', '-q', action='store_true',
+                    help='quiet mode.')
 
 def main():
     args = parser.parse_args()
@@ -24,7 +26,9 @@ def main():
         sys.exit(2)
 
     folder = args.folder
-    print('Dropbox folder name:', folder)
+
+    if not args.quiet:
+        print('Dropbox folder name:', folder)
 
     dbx = dropbox.Dropbox(args.token)
 
