@@ -14,6 +14,10 @@ parser.add_argument('folder', type=str, nargs='?', default='download',
 parser.add_argument('--token', type=str, default=TOKEN,
                     help='Access token '
                     '(see https://www.dropbox.com/developers/apps)')
+parser.add_argument('--size', '-s', action='store_true',
+                    help='Display sum of file size.')
+parser.add_argument('--quiet', '-q', action='store_true',
+                    help='quiet mode.')
 
 def main():
     args = parser.parse_args()
@@ -22,11 +26,31 @@ def main():
         sys.exit(2)
 
     folder = args.folder
-    print('Dropbox folder name:', folder)
+
+    if not args.quiet:
+        print('Dropbox folder name:', folder)
 
     dbx = dropbox.Dropbox(args.token)
 
-    list_folder(dbx, folder, '')
+    if args.size:
+        disk_usage(dbx, folder);
+    else:
+        list_folder(dbx, folder, '')
+
+def disk_usage(dbx, folder):
+    path = '/%s' % (folder)
+    while '//' in path:
+        path = path.replace('//', '/')
+    path = path.rstrip('/')
+    try:
+        if stopwatch('disk_usage'):
+            res = dbx.files_list_folder(path, recursive=True)
+    except dropbox.exceptions.ApiError as err:
+        print('Folder listing failed for', path, '-- assumed empty:', err)
+        return {}
+    else:
+        size = _disk_usage_recursive(dbx, res)
+        print(folder, 'size = ', size)
 
 def list_folder(dbx, folder, subfolder):
     path = '/%s/%s' % (folder, subfolder.replace(os.path.sep, '/'))
@@ -40,7 +64,6 @@ def list_folder(dbx, folder, subfolder):
         print('Folder listing failed for', path, '-- assumed empty:', err)
         return {}
     else:
-        rv = {}
         for entry in res.entries:
             print(entry.name)
 
@@ -51,6 +74,18 @@ def stopwatch(message):
     finally:
         t1 = time.time()
         print('Total elapsed time for %s: %.3f' % (message, t1 - t0))
+
+def _disk_usage_recursive(dbx, res):
+    size = 0
+    for entry in res.entries:
+        if type(entry) is dropbox.files.FileMetadata:
+            size += entry.size
+
+    if (res.has_more):
+        res_continue = dbx.files_list_folder_continue(res.cursor)
+        size += _disk_usage_recursive(dbx, res_continue)
+
+    return size
 
 if __name__ == '__main__':
     main()
