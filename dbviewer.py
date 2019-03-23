@@ -46,7 +46,7 @@ def disk_usage(dbx, folder, subfolder):
         return {}
     else:
         size = 0
-        disk_usage_recursive(dbx, res)
+        _disk_usage_recursive(dbx, res)
 
 def list_folder(dbx, folder, subfolder):
     path = '/%s/%s' % (folder, subfolder.replace(os.path.sep, '/'))
@@ -71,13 +71,13 @@ def stopwatch(message):
         t1 = time.time()
         print('Total elapsed time for %s: %.3f' % (message, t1 - t0))
 
-def disk_usage_recursive(dbx, res):
+def _disk_usage_recursive(dbx, res):
     for entry in res.entries:
         print(entry.name)
 
     if (res.has_more):
         res_continue = dbx.files_list_folder_continue(res.cursor)
-        disk_usage_recursive(dbx, res_continue)
+        _disk_usage_recursive(dbx, res_continue)
 
 if __name__ == '__main__':
     main()
