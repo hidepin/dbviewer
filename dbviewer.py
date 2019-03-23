@@ -43,14 +43,14 @@ def disk_usage(dbx, folder):
         path = path.replace('//', '/')
     path = path.rstrip('/')
     try:
-        if stopwatch('disk_usage'):
+        if _stopwatch('disk_usage'):
             res = dbx.files_list_folder(path, recursive=True)
     except dropbox.exceptions.ApiError as err:
         print('Folder listing failed for', path, '-- assumed empty:', err)
         return {}
     else:
         size = _disk_usage_recursive(dbx, res)
-        print(folder, 'size = ', size)
+        print(folder, 'size = ', size/1024/1024)
 
 def list_folder(dbx, folder, subfolder):
     path = '/%s/%s' % (folder, subfolder.replace(os.path.sep, '/'))
@@ -58,16 +58,15 @@ def list_folder(dbx, folder, subfolder):
         path = path.replace('//', '/')
     path = path.rstrip('/')
     try:
-        if stopwatch('list_folder'):
+        if _stopwatch('list_folder'):
             res = dbx.files_list_folder(path)
     except dropbox.exceptions.ApiError as err:
         print('Folder listing failed for', path, '-- assumed empty:', err)
         return {}
     else:
-        for entry in res.entries:
-            print(entry.name)
+        _list_folder_recursive(dbx, res)
 
-def stopwatch(message):
+def _stopwatch(message):
     t0 = time.time()
     try:
         yield
@@ -86,6 +85,15 @@ def _disk_usage_recursive(dbx, res):
         size += _disk_usage_recursive(dbx, res_continue)
 
     return size
+
+def _list_folder_recursive(dbx, res):
+    for entry in res.entries:
+        if type(entry) is dropbox.files.FileMetadata:
+            print(entry.name)
+
+    if (res.has_more):
+        res_continue = dbx.files_list_folder_continue(res.cursor)
+        _list_folder_recursive(dbx, res_continue)
 
 if __name__ == '__main__':
     main()
