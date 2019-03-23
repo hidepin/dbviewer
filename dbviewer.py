@@ -89,7 +89,7 @@ def _disk_usage_recursive(dbx, res):
 def _list_folder_recursive(dbx, res):
     for entry in res.entries:
         if type(entry) is dropbox.files.FileMetadata:
-            print(entry.name)
+            print(entry.name, ",", entry.size)
 
     if (res.has_more):
         res_continue = dbx.files_list_folder_continue(res.cursor)
